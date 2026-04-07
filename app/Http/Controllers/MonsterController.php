@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Monster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class MonsterController extends Controller
 {
@@ -32,20 +33,37 @@ class MonsterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'image' => ['image'],
+            'image' => ['nullable', 'image'],
             'name' => ['required', 'string'],
-            'description' => ['string']
+            'description' => ['nullable', 'string']
         ]);
 
         $monster = new Monster();
-        $path = $request->file('image')->store('monsters', 'public');
-        $imageUrl = Storage::url($path);
-        $monster->image = $imageUrl;
+
+        if ($request->hasFile('image'))
+        {
+            $path = $request->file('image')->store('monsters', 'public');
+            $imageUrl = Storage::url($path);
+            $monster->image = $imageUrl;
+        } else
+        {
+            $monster->image = null;
+        }
+
         $monster->name = $request->name;
-        $monster->description = $request->description;
+
+        if ($request->description)
+        {
+            $monster->description = $request->description;
+        } else
+        {
+            $monster->description = null;
+        }
+
+        $monster->user_id = Auth::id();
         $monster->save();
 
-        return redirect()->route('monsters.index')->with('success', 'Monster created successfully.');
+        return to_route('monsters.index')->with('success', 'Monster created successfully.');
     }
 
     /**
@@ -53,7 +71,7 @@ class MonsterController extends Controller
      */
     public function show(Monster $monster)
     {
-        //
+        // uitbreiding wanneer ik types/moves aanmaak
     }
 
     /**
@@ -61,7 +79,12 @@ class MonsterController extends Controller
      */
     public function edit(Monster $monster)
     {
-        //
+        if ($monster->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        return view('monster.edit', compact('monster'));
     }
 
     /**
@@ -69,7 +92,40 @@ class MonsterController extends Controller
      */
     public function update(Request $request, Monster $monster)
     {
-        //
+        if ($monster->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        $request->validate([
+        'image' => 'nullable',
+        'name' => 'required',
+        'description' => 'nullable'
+        ]);
+
+        if ($request->hasFile('image'))
+        {
+            $path = $request->file('image')->store('monsters', 'public');
+            $imageUrl = Storage::url($path);
+            $monster->image = $imageUrl;
+        } else
+        {
+            $monster->image = null;
+        }
+
+        $monster->name = $request->name;
+
+        if ($request->description)
+        {
+            $monster->description = $request->description;
+        } else
+        {
+            $monster->description = null;
+        }
+
+        $monster->save();
+
+        return to_route('monsters.index', $monster)->with('success', 'Monster updated successfully.');
     }
 
     /**
@@ -77,6 +133,13 @@ class MonsterController extends Controller
      */
     public function destroy(Monster $monster)
     {
-        //
+        if ($monster->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        $monster->delete();
+
+        return to_route('monsters.index')->with('success', 'Monster deleted successfully.');
     }
 }

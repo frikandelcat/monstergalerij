@@ -18,11 +18,13 @@
 
     <h1>Create Monster</h1>
 
-    <form action="{{ route('monsters.store') }}" method="POST">
+    <a href="{{ route('monsters.index') }}">Back</a><br><br>
+
+    <form action="{{ route('monsters.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="file" id="image" name="image"><br><br>
 
-        <label for="name">Name:</label>
+        <label for="name">Name: *</label>
         <input type="text" id="name" name="name"><br><br>
 
         <label for="description">Description:</label><br>
