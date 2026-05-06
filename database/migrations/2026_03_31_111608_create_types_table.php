@@ -15,6 +15,7 @@ return new class extends Migration
         {
             $table->id();
             $table->string('name');
+            $table->string('color')->nullable();
             $table->boolean('is_custom');
             $table->foreignId('user_id')->nullable();
             $table->timestamps();

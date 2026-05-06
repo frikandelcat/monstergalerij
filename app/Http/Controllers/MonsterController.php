@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Monster;
+use App\Models\Move;
+use App\Models\Type;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +16,7 @@ class MonsterController extends Controller
      */
     public function index()
     {
-        $monsters = Monster::all();
+        $monsters = Monster::where('user_id', Auth::id())->get();
 
         return view('monster.index', compact('monsters'));
     }
@@ -24,7 +26,13 @@ class MonsterController extends Controller
      */
     public function create()
     {
-        return view('monster.create');
+        $types = Type::where('is_custom', false)
+            ->orWhere('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+        $moves = Move::orderBy('name')->get();
+        
+        return view('monster.create', compact('types', 'moves'));
     }
 
     /**
@@ -35,7 +43,13 @@ class MonsterController extends Controller
         $request->validate([
             'image' => ['nullable', 'image'],
             'name' => ['required', 'string'],
-            'description' => ['nullable', 'string']
+            'description' => ['nullable', 'string'],
+            'primary_type_id' => ['nullable', 'exists:types,id'],
+            'secondary_type_id' => ['nullable', 'exists:types,id', 'different:primary_type_id'],
+            'move_1_id' => ['nullable', 'exists:moves,id'],
+            'move_2_id' => ['nullable', 'exists:moves,id', 'different:move_1_id'],
+            'move_3_id' => ['nullable', 'exists:moves,id', 'different:move_1_id', 'different:move_2_id'],
+            'move_4_id' => ['nullable', 'exists:moves,id', 'different:move_1_id', 'different:move_2_id', 'different:move_3_id'],
         ]);
 
         $monster = new Monster();
@@ -45,9 +59,6 @@ class MonsterController extends Controller
             $path = $request->file('image')->store('monsters', 'public');
             $imageUrl = Storage::url($path);
             $monster->image = $imageUrl;
-        } else
-        {
-            $monster->image = null;
         }
 
         $monster->name = $request->name;
@@ -63,6 +74,22 @@ class MonsterController extends Controller
         $monster->user_id = Auth::id();
         $monster->save();
 
+        $selectedTypeIds = array_filter([
+            $request->input('primary_type_id'),
+            $request->input('secondary_type_id'),
+        ]);
+
+        $monster->types()->sync(array_unique($selectedTypeIds));
+
+        $selectedMoveIds = array_filter([
+            $request->input('move_1_id'),
+            $request->input('move_2_id'),
+            $request->input('move_3_id'),
+            $request->input('move_4_id'),
+        ]);
+
+        $monster->moves()->sync(array_unique($selectedMoveIds));
+
         return to_route('monsters.index')->with('success', 'Monster created successfully.');
     }
 
@@ -71,7 +98,14 @@ class MonsterController extends Controller
      */
     public function show(Monster $monster)
     {
-        // uitbreiding wanneer ik types/moves aanmaak
+        if ($monster->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        $monster->load(['types', 'moves']);
+
+        return view('monster.show', compact('monster'));
     }
 
     /**
@@ -84,7 +118,13 @@ class MonsterController extends Controller
             abort(403);
         }
 
-        return view('monster.edit', compact('monster'));
+        $types = Type::where('is_custom', false)
+            ->orWhere('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
+        $moves = Move::orderBy('name')->get();
+
+        return view('monster.edit', compact('monster', 'types', 'moves'));
     }
 
     /**
@@ -98,9 +138,15 @@ class MonsterController extends Controller
         }
 
         $request->validate([
-        'image' => 'nullable',
-        'name' => 'required',
-        'description' => 'nullable'
+            'image' => ['nullable', 'image'],
+            'name' => ['required', 'string'],
+            'description' => ['nullable', 'string'],
+            'primary_type_id' => ['nullable', 'exists:types,id'],
+            'secondary_type_id' => ['nullable', 'exists:types,id', 'different:primary_type_id'],
+            'move_1_id' => ['nullable', 'exists:moves,id'],
+            'move_2_id' => ['nullable', 'exists:moves,id', 'different:move_1_id'],
+            'move_3_id' => ['nullable', 'exists:moves,id', 'different:move_1_id', 'different:move_2_id'],
+            'move_4_id' => ['nullable', 'exists:moves,id', 'different:move_1_id', 'different:move_2_id', 'different:move_3_id'],
         ]);
 
         if ($request->hasFile('image'))
@@ -108,9 +154,6 @@ class MonsterController extends Controller
             $path = $request->file('image')->store('monsters', 'public');
             $imageUrl = Storage::url($path);
             $monster->image = $imageUrl;
-        } else
-        {
-            $monster->image = null;
         }
 
         $monster->name = $request->name;
@@ -125,9 +168,25 @@ class MonsterController extends Controller
 
         $monster->save();
 
+        $selectedTypeIds = array_filter([
+            $request->input('primary_type_id'),
+            $request->input('secondary_type_id'),
+        ]);
+
+        $monster->types()->sync(array_unique($selectedTypeIds));
+
+        $selectedMoveIds = array_filter([
+            $request->input('move_1_id'),
+            $request->input('move_2_id'),
+            $request->input('move_3_id'),
+            $request->input('move_4_id'),
+        ]);
+
+        $monster->moves()->sync(array_unique($selectedMoveIds));
+
         return to_route('monsters.index', $monster)->with('success', 'Monster updated successfully.');
     }
-
+    
     /**
      * Remove the specified resource from storage.
      */

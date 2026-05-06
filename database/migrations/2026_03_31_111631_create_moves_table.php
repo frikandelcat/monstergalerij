@@ -18,7 +18,11 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->integer('power')->nullable();
             $table->integer('accuracy')->nullable();
+            $table->string('damage_class');
             $table->integer('pp')->nullable();
+            $table->foreignId('type_id')->constrained('types');
+            $table->boolean('is_custom')->default(false);
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }

@@ -15,6 +15,8 @@ return new class extends Migration
         {
             $table->foreignId('monster_id')->constrained()->cascadeOnDelete();
             $table->foreignId('type_id')->constrained()->cascadeOnDelete();
+
+            $table->primary(['monster_id', 'type_id']);
         });
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Type;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TypeController extends Controller
 {
@@ -12,7 +13,9 @@ class TypeController extends Controller
      */
     public function index()
     {
-        //
+        $types = Type::where('is_custom', false)->orWhere('user_id', Auth::id())->get();
+
+        return view('type.index', compact('types'));
     }
 
     /**
@@ -20,7 +23,7 @@ class TypeController extends Controller
      */
     public function create()
     {
-        //
+        return view('type.create');
     }
 
     /**
@@ -28,7 +31,19 @@ class TypeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string'],
+            'color' => ['nullable', 'string'],
+        ]);
+
+        Type::create([
+            'name' => $validated['name'],
+            'color' => $validated['color'] ?? '#ffffff',
+            'user_id' => Auth::id(),
+            'is_custom' => true,
+        ]);
+
+        return to_route('types.index')->with('success', 'Type created successfully.');
     }
 
     /**
@@ -44,7 +59,12 @@ class TypeController extends Controller
      */
     public function edit(Type $type)
     {
-        //
+        if ($type->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        return view('type.edit', compact('type'));
     }
 
     /**
@@ -52,7 +72,22 @@ class TypeController extends Controller
      */
     public function update(Request $request, Type $type)
     {
-        //
+        if ($type->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+        
+        $validated = $request->validate([
+            'name' => ['required', 'string'],
+            'color' => ['nullable', 'string'],
+        ]);
+
+        $type->update([
+            'name' => $validated['name'],
+            'color' => $validated['color'] ?? '#ffffff',
+        ]);
+
+        return to_route('types.index')->with('success', 'Type updated successfully.');
     }
 
     /**
@@ -60,6 +95,13 @@ class TypeController extends Controller
      */
     public function destroy(Type $type)
     {
-        //
+        if (! $type->is_custom || $type->user_id !== Auth::id())
+        {
+            abort(403);
+        }
+
+        $type->delete();
+
+        return to_route('types.index')->with('success', 'Type deleted successfully.');
     }
 }

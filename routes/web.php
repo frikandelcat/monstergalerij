@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\MonsterController;
+use App\Http\Controllers\MoveController;
+use App\Http\Controllers\TypeController;
+use App\Http\Controllers\ExploreController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,5 +24,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::resource('/monsters', MonsterController::class)->middleware('auth');
+Route::resource('/types', TypeController::class)->middleware('auth');
+Route::resource('/moves', MoveController::class)->middleware('auth');
+Route::get('/explore', [ExploreController::class, 'index'])->name('explore.index');
+Route::get('/explore/{user}', [ExploreController::class, 'monsters'])->name('explore.monsters');
 
 require __DIR__.'/auth.php';

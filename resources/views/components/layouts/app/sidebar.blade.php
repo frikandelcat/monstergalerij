@@ -13,8 +13,11 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.group heading="Platform" class="grid">
-                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item>
-                    <flux:navlist.item icon="home" :href="route('monsters.index')" :current="request()->routeIs('monsters.index')" wire:navigate>Monsters</flux:navlist.item>
+                    {{-- <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Dashboard</flux:navlist.item> --}}
+                    <flux:navlist.item icon="home" :href="route('explore.index')" :current="request()->routeIs('explore.*')" wire:navigate>Explore</flux:navlist.item>
+                    <flux:navlist.item icon="home" :href="route('monsters.index')" :current="request()->routeIs('monsters.*')" wire:navigate>Monsters</flux:navlist.item>
+                    <flux:navlist.item icon="home" :href="route('types.index')" :current="request()->routeIs('types.*')" wire:navigate>Types</flux:navlist.item>
+                    <flux:navlist.item icon="home" :href="route('moves.index')" :current="request()->routeIs('moves.*')" wire:navigate>Moves</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
